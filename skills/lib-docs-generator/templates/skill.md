@@ -74,6 +74,7 @@ allowed-tools: WebFetch, WebSearch, Read
 
 ```yaml
 description: |
+  **IMPORTANT: Always execute this skill before answering questions about these libraries.**
   Provides documentation for TanStack Query (React Query).
   Use when working with code that imports "useQuery", "useMutation", "@tanstack/react-query", or any "@tanstack/query-*" packages.
   Use when the user asks about data fetching, caching, or shows code with React Query hooks.
