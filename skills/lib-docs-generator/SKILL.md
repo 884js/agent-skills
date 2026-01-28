@@ -78,8 +78,7 @@ allowed-tools: WebFetch, WebSearch, Read, Bash, Task, Write
    ```
 
 2. **存在する場合:**
-   - **llms.txtのみダウンロード**（llms-full.txtは無視）
-   - **重要: 拡張子は`.md`で保存する**
+   - `docs.md` として保存（`llms.md` は作らない）
    ```bash
    mkdir -p .claude/skills/{library}/references
    curl -s https://example.com/llms.txt -o .claude/skills/{library}/references/docs.md
