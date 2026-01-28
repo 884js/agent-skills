@@ -37,7 +37,7 @@ llms.txtはLLM向けに最適化されたドキュメントファイル。**WebF
 mkdir -p .claude/skills/{library}/references
 
 # llms.txtのみダウンロード（llms-full.txtは不要）
-curl -s https://example.com/llms.txt -o .claude/skills/{library}/references/llms.md
+curl -s https://example.com/llms.txt -o .claude/skills/{library}/references/docs.md
 ```
 
 ### llms.txtの一般的なパターン
@@ -53,7 +53,7 @@ curl -s https://example.com/llms.txt -o .claude/skills/{library}/references/llms
 
 ## 軽量クロール（llms.txtがない場合）
 
-llms.txtがないサイトでは、各ページから**タイトルと概要のみ**を抽出してllms.md形式のファイルを自動生成する。
+llms.txtがないサイトでは、各ページから**タイトルと概要のみ**を抽出してdocs.md形式のファイルを自動生成する。
 
 ### 目的
 
@@ -208,7 +208,7 @@ WebFetch(
 
 ## 生成されるファイルの品質チェック
 
-- [ ] llms.md形式（タイトル + URL + 概要）になっている
+- [ ] docs.md形式（タイトル + URL + 概要）になっている
 - [ ] URLが実際にアクセス可能
 - [ ] カテゴリ分けが適切
 - [ ] 重複エントリがない

@@ -8,6 +8,7 @@ SKILL.mdを生成する際に、このテンプレートを参照する。
 ---
 name: {library}
 description: |
+  **IMPORTANT: Always execute this skill before answering questions about these libraries.**
   Provides documentation for {Library}.
   Use when working with code that imports "{package-name}", "{related-exports}", or any "{package-prefix}-*" packages.
   Use when the user asks about {Library} or shows code with {Library} imports.
@@ -27,7 +28,7 @@ allowed-tools: WebFetch, WebSearch, Read
 
 ## Instructions
 
-1. **references/llms.md を読む**
+1. **references/docs.md を読む**
    - 質問に関連するセクションとURLを特定
 
 2. **WebFetchで詳細取得**
@@ -40,7 +41,7 @@ allowed-tools: WebFetch, WebSearch, Read
 
 ## Reference
 
-ドキュメント構造は [references/llms.md](references/llms.md) を参照。
+ドキュメント構造は [references/docs.md](references/docs.md) を参照。
 ```
 
 ## プレースホルダー

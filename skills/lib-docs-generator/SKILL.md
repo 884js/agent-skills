@@ -42,19 +42,20 @@ allowed-tools: WebFetch, WebSearch, Read, Bash, Task, Write
 └─────────────────────────────────────────────────┘
                     ↓
 ┌─────────────────────────────────────────────────┐
-│ Phase 2: 軽量クロール                            │
+│ Phase 2: ドキュメント収集                        │
 ├─────────────────────────────────────────────────┤
 │ - 各URLをWebFetchで取得                          │
-│ - タイトル + 最初の1文だけ抽出                   │
+│ - タイトル + 概要 + コード例 + API情報を抽出     │
 │ - カテゴリ分け                                   │
 └─────────────────────────────────────────────────┘
                     ↓
 ┌─────────────────────────────────────────────────┐
-│ Phase 3: llms.md生成                             │
+│ Phase 3: docs.md生成                             │
 ├─────────────────────────────────────────────────┤
 │ - template.mdを参照                              │
-│ - llms.txt形式で整形                             │
-│ - references/llms.mdとして保存                   │
+│ - 詳細形式で整形（概要+コード例+API情報）        │
+│ - 品質チェックリストを確認                       │
+│ - references/docs.mdとして保存                   │
 └─────────────────────────────────────────────────┘
                     ↓
 ┌─────────────────────────────────────────────────┐
@@ -81,7 +82,7 @@ allowed-tools: WebFetch, WebSearch, Read, Bash, Task, Write
    - **重要: 拡張子は`.md`で保存する**
    ```bash
    mkdir -p .claude/skills/{library}/references
-   curl -s https://example.com/llms.txt -o .claude/skills/{library}/references/llms.md
+   curl -s https://example.com/llms.txt -o .claude/skills/{library}/references/docs.md
    ```
    - **Phase 4（ファイル生成）へ直接進む**（ユーザー確認不要）
 
@@ -140,16 +141,43 @@ API Reference:
 
 ---
 
-## Phase 2: 軽量クロール
+## Phase 2: ドキュメント収集
 
-**目的:** 各URLからタイトルと概要（最初の1-2文）だけを抽出
+**目的:** 各URLから包括的な情報を抽出（概要、コード例、API情報を含む）
 
-### WebFetchプロンプト
+### 取得する情報
+
+各URLから以下を抽出:
+
+1. **基本情報**
+   - ページタイトル
+   - 概要（最初の1-2文）
+
+2. **主要コンテンツ**
+   - セクション見出し
+   - 重要な説明文（箇条書き）
+
+3. **コード例**
+   - 基本的な使用例（最初のコードブロック）
+   - インポート文
+
+4. **API情報**（APIリファレンスページの場合）
+   - 関数/コンポーネント名
+   - パラメータと型
+   - 戻り値
+
+### WebFetchプロンプト（詳細版）
 
 ```
 WebFetch(
   url="[URL]",
-  prompt="Extract ONLY: 1) The page title 2) The first 1-2 sentences of the main content. Return in format: TITLE: [title] | DESCRIPTION: [description]"
+  prompt="Extract the following from this documentation page:
+  1. Page title
+  2. Brief description (1-2 sentences)
+  3. Main content summary (key points as bullet list)
+  4. First code example with imports
+  5. API signatures if present (function name, parameters, return type)
+  Format as structured markdown."
 )
 ```
 
@@ -158,8 +186,8 @@ WebFetch(
 ページ数が多い場合はTaskエージェントを並列起動:
 
 ```
-Task(subagent_type="Explore", prompt="以下のURLからタイトルと概要を抽出: [URLリストA]")
-Task(subagent_type="Explore", prompt="以下のURLからタイトルと概要を抽出: [URLリストB]")
+Task(subagent_type="Explore", prompt="以下のURLから詳細情報を抽出: [URLリストA]")
+Task(subagent_type="Explore", prompt="以下のURLから詳細情報を抽出: [URLリストB]")
 ```
 
 ### カテゴリ分け
@@ -178,13 +206,34 @@ URLパターンで自動分類:
 
 ---
 
-## Phase 3: llms.md生成
+## Phase 3: docs.md生成
+
+### 生成手順
+
+1. **収集情報の整理**
+   - Phase 2で取得した全情報を整理
+   - 重複・無効URLを除外
+   - 情報の欠落がないか確認
+
+2. **カテゴリ分類**
+   - URLパターンと内容に基づいて分類
+   - Getting Started / Core Concepts / API Reference / Guides / Examples
+
+3. **構造化**
+   - 各ページごとにサブセクションを作成
+   - 概要 → 主要ポイント → コード例 → API情報 の順で記載
+
+4. **品質チェック**
+   - 下記チェックリストを確認
+
+5. **保存**
+   - `references/docs.md` として保存
 
 ### template.mdを参照
 
-[templates/llms.md](templates/llms.md) を参照して、llms.txt形式で整形する。
+[templates/docs.md](templates/docs.md) を参照して、詳細な出力形式で整形する。
 
-### 出力形式
+### 出力形式（詳細版）
 
 ```markdown
 # {Library}
@@ -193,25 +242,84 @@ URLパターンで自動分類:
 
 ## Getting Started
 
-- [Installation](URL): インストール方法
-- [Quick Start](URL): 基本的な使い方
+### Installation
+- **URL**: https://...
+- **概要**: インストール方法
+- **手順**:
+  - npm install {package}
+  - 設定ファイルの作成
+
+### Quick Start
+- **URL**: https://...
+- **概要**: 基本的な使い方
+- **コード例**:
+  ```tsx
+  import { useQuery } from '@tanstack/react-query'
+
+  function Example() {
+    const { data } = useQuery({ queryKey: ['todos'], queryFn: fetchTodos })
+  }
+  ```
 
 ## API Reference
 
-- [useQuery](URL): データ取得用フック
-- [useMutation](URL): データ更新用フック
+### useQuery
+- **URL**: https://...
+- **概要**: データ取得用フック
+- **シグネチャ**: `useQuery(options: UseQueryOptions): UseQueryResult`
+- **主要パラメータ**:
+  - `queryKey`: クエリの一意識別子
+  - `queryFn`: データ取得関数
+- **コード例**:
+  ```tsx
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['user', userId],
+    queryFn: () => fetchUser(userId),
+  })
+  ```
+```
 
-## Guides
+### 品質チェックリスト
 
-- [Caching](URL): キャッシュの仕組みと設定
-...
+生成後、以下を確認:
+
+- [ ] **必須セクション**: Library名、Description、Getting Started が含まれている
+- [ ] **URL検証**: 全URLがアクセス可能
+- [ ] **コード例**: 主要機能にコード例がある
+- [ ] **API情報**: API Referenceページにはシグネチャがある
+- [ ] **重複なし**: 同じ内容が複数回出現していない
+- [ ] **網羅性**: 主要なドキュメントページが含まれている
+
+### 良い例・悪い例
+
+**良い例:**
+```markdown
+### useQuery
+- **URL**: https://tanstack.com/query/latest/docs/react/reference/useQuery
+- **概要**: サーバーからのデータ取得・キャッシュ・再検証を行うフック
+- **シグネチャ**: `useQuery(options): UseQueryResult`
+- **主要パラメータ**:
+  - `queryKey: QueryKey` - クエリの一意識別子
+  - `queryFn: QueryFunction` - データ取得関数
+- **コード例**:
+  ```tsx
+  const { data, isLoading } = useQuery({
+    queryKey: ['todos'],
+    queryFn: fetchTodos,
+  })
+  ```
+```
+
+**悪い例:**
+```markdown
+- [useQuery](URL): フック
 ```
 
 ### 保存
 
 ```bash
-# references/llms.md として保存
-Write to: .claude/skills/{library}/references/llms.md
+# references/docs.md として保存
+Write to: .claude/skills/{library}/references/docs.md
 ```
 
 ---
@@ -224,7 +332,7 @@ Write to: .claude/skills/{library}/references/llms.md
 {library}/
 ├── SKILL.md              # メインスキルファイル
 └── references/
-    └── llms.md           # llms.txt形式（リンク集 + 概要）
+    └── docs.md           # llms.txt形式（リンク集 + 概要）
 ```
 
 ### SKILL.mdテンプレート
@@ -265,7 +373,7 @@ description: |
 
 ```
 スキル発動時:
-  1. references/llms.md を読む
+  1. references/docs.md を読む
   2. 質問に関連するセクション/URLを特定
   3. WebFetchで該当URLの詳細を取得
   4. 回答を生成
@@ -295,5 +403,5 @@ description: |
 
 ### 構造が複雑
 
-- 手動でllms.mdを調整
+- 手動でdocs.mdを調整
 - 目次を追加して参照しやすくする
